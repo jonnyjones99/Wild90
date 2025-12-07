@@ -1,73 +1,117 @@
-# React + TypeScript + Vite
+# Wild90 - Bug Scanner PWA
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A multiplayer Progressive Web App (PWA) for scanning bugs, earning scores, and collecting badges. Built with React, TypeScript, Vite, and Supabase.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- 📸 **Camera Scanner**: Use your device's camera to scan bugs
+- 🎯 **Scoring System**: Earn points for each bug you scan
+- 🏆 **Badge Collection**: Unlock badges as you progress
+- 👤 **User Profiles**: Track your total score and bugs scanned
+- 🔐 **Authentication**: Secure user accounts with Supabase Auth
+- 📱 **PWA Support**: Install as an app on your device
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Frontend**: React 19 + TypeScript
+- **Build Tool**: Vite
+- **Backend**: Supabase (Auth, Database, Storage)
+- **Routing**: React Router
+- **PWA**: Vite PWA Plugin
 
-## Expanding the ESLint configuration
+## Setup Instructions
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 1. Install Dependencies
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 2. Set Up Supabase
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+1. Create a new project at [supabase.com](https://supabase.com)
+2. Go to Project Settings > API
+3. Copy your Project URL and anon/public key
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 3. Configure Environment Variables
+
+Create a `.env` file in the root directory:
+
+```env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
+
+You can use `.env.example` as a template.
+
+### 4. Set Up Database Schema
+
+1. Open your Supabase project dashboard
+2. Go to SQL Editor
+3. Run the SQL commands from `DATABASE_SCHEMA.md` to create all necessary tables, functions, and triggers
+
+### 5. Run the Development Server
+
+```bash
+npm run dev
+```
+
+The app will be available at `http://localhost:5173`
+
+### 6. Build for Production
+
+```bash
+npm run build
+```
+
+The built files will be in the `dist` directory.
+
+## Project Structure
+
+```
+src/
+├── components/          # React components
+│   ├── Auth.tsx       # Authentication UI
+│   ├── CameraScanner.tsx # Camera and scanning functionality
+│   ├── Profile.tsx     # User profile and badges
+│   └── Navigation.tsx  # App navigation
+├── contexts/           # React contexts
+│   └── AuthContext.tsx # Authentication state management
+├── lib/               # Utilities and configurations
+│   └── supabase.ts    # Supabase client setup
+└── types/             # TypeScript type definitions
+    └── database.ts    # Database type definitions
+```
+
+## Database Schema
+
+See `DATABASE_SCHEMA.md` for complete database setup instructions including:
+- Tables: `bugs`, `user_profiles`, `bug_scans`, `badges`, `user_badges`
+- Functions: Score increment, badge checking
+- Triggers: Auto-update timestamps, badge awards
+
+## POC Notes
+
+This is a Proof of Concept application. Current limitations:
+
+1. **Bug Detection**: Currently uses mock/random bug detection. In future maybe:
+   - ML models (TensorFlow.js, ONNX.js)
+   - Computer vision APIs
+   - Custom image recognition services
+
+2. **Image Storage**: Images are stored as base64 in db. will need something like this:
+   - Upload images to Supabase Storage
+   - Store public URLs in the database
+   - Implement image compression
+
+3. **Badge System**: Basic badge checking is implemented. Extend the `check_and_award_badges` function for more complex requirements.
+
+## Future Enhancements
+
+- [ ] Real ML-based bug identification
+- [ ] Leaderboard system
+- [ ] Social features (share scans, follow friends)
+- [ ] Location-based features
+- [ ] Bug encyclopedia
+- [ ] Push notifications for new badges
+- [ ] Offline mode with sync
