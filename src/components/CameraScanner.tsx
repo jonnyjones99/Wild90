@@ -548,16 +548,30 @@ export function CameraScanner() {
               onClick={scanBug}
               disabled={loading || isScanning}
               className="scan-button"
-              whileHover={{ scale: loading ? 1 : 1.05 }}
-              whileTap={{ scale: loading ? 1 : 0.95 }}
-              animate={loading ? {
-                boxShadow: [
-                  "0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 0 rgba(102, 126, 234, 0.7)",
-                  "0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 10px rgba(102, 126, 234, 0)",
-                  "0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 0 rgba(102, 126, 234, 0.7)",
-                ]
-              } : {}}
-              transition={{ duration: 1.5, repeat: loading ? Infinity : 0 }}
+              initial={{ x: '-50%' }}
+              animate={{ 
+                x: '-50%',
+                ...(loading ? {
+                  boxShadow: [
+                    "0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 0 rgba(101, 163, 13, 0.7)",
+                    "0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 10px rgba(101, 163, 13, 0)",
+                    "0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 0 rgba(101, 163, 13, 0.7)",
+                  ]
+                } : {})
+              }}
+              whileHover={loading ? {} : { 
+                scale: 1.05,
+                x: '-50%'
+              }}
+              whileTap={loading ? {} : { 
+                scale: 0.95,
+                x: '-50%'
+              }}
+              transition={{ 
+                duration: loading ? 1.5 : 0.2,
+                repeat: loading ? Infinity : 0,
+                x: { duration: 0 }
+              }}
             >
               {loading ? (
                 <>
