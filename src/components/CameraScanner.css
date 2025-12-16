@@ -1,41 +1,65 @@
 .camera-scanner {
-  padding: 20px;
-  max-width: 600px;
-  margin: 0 auto;
-  position: relative;
-}
-
-.scanner-content {
-  position: relative;
-  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #000;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
 .scanner-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6) 0%, transparent 100%);
+  z-index: 20;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
 }
 
 .scanner-header h2 {
   margin: 0;
-  color: #333;
+  color: white;
+  font-size: 20px;
+  font-weight: 600;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.scanner-header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-test {
+  border: none;
+  padding: 10px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  -webkit-tap-highlight-color: transparent;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: rgba(102, 126, 234, 0.9);
   color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.2s;
 }
 
-.btn-primary:hover:not(:disabled) {
-  opacity: 0.9;
+.btn-primary:active:not(:disabled) {
+  transform: scale(0.95);
+  background: rgba(102, 126, 234, 1);
 }
 
 .btn-primary:disabled {
@@ -44,60 +68,63 @@
 }
 
 .btn-secondary {
-  background: #f0f0f0;
-  color: #333;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
 }
 
-.btn-secondary:hover {
-  background: #e0e0e0;
+.btn-secondary:active {
+  transform: scale(0.95);
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .btn-test {
-  background: #ffd700;
+  background: rgba(255, 215, 0, 0.9);
   color: #333;
-  border: none;
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
-}
-
-.btn-test:hover {
-  background: #ffed4e;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(255, 215, 0, 0.4);
+  font-size: 12px;
+  padding: 8px 12px;
 }
 
 .btn-test:active {
-  transform: translateY(0);
+  transform: scale(0.95);
 }
 
 .error-banner {
-  background: #fee;
-  color: #c33;
-  padding: 12px;
-  border-radius: 8px;
-  margin-bottom: 20px;
+  position: absolute;
+  top: calc(60px + env(safe-area-inset-top));
+  left: 16px;
+  right: 16px;
+  background: rgba(244, 67, 54, 0.95);
+  color: white;
+  padding: 12px 16px;
+  border-radius: 12px;
   text-align: center;
+  font-size: 14px;
+  z-index: 30;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.scanner-content {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .camera-container {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   width: 100%;
+  height: 100%;
   background: #000;
-  border-radius: 12px;
   overflow: hidden;
-  aspect-ratio: 4/3;
-  margin-top: 20px;
 }
 
 .camera-flash {
@@ -116,7 +143,7 @@
   height: 100%;
   object-fit: cover;
   background: #000;
-  transform: scaleX(-1); /* Mirror the video for better UX */
+  transform: scaleX(-1);
   display: block;
 }
 
@@ -124,40 +151,46 @@
   width: 100%;
   height: 100%;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #f5f5f5;
-  color: #999;
+  background: #000;
+  color: rgba(255, 255, 255, 0.6);
+  gap: 16px;
+}
+
+.camera-placeholder p {
+  font-size: 16px;
+  margin: 0;
 }
 
 .scan-button {
   position: absolute;
-  bottom: 20px;
+  bottom: calc(100px + env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(102, 126, 234, 0.9);
-  color: white;
+  background: rgba(255, 255, 255, 0.95);
+  color: #333;
   border: none;
-  padding: 16px 32px;
+  padding: 20px 40px;
   border-radius: 50px;
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   transition: all 0.2s;
   display: flex;
   align-items: center;
-  gap: 8px;
-}
-
-.scan-button:hover:not(:disabled) {
-  background: rgba(102, 126, 234, 1);
-  transform: translateX(-50%) scale(1.05);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+  gap: 10px;
+  z-index: 15;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  -webkit-tap-highlight-color: transparent;
 }
 
 .scan-button:active:not(:disabled) {
   transform: translateX(-50%) scale(0.95);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .scan-button:disabled {
@@ -166,10 +199,10 @@
 }
 
 .scan-spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(51, 51, 51, 0.3);
+  border-top-color: #333;
   border-radius: 50%;
 }
 
@@ -179,16 +212,130 @@
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 10;
+  z-index: 25;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 20px;
-  background: rgba(245, 245, 245, 0.98);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  padding: calc(20px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom));
+  background: var(--background);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   box-sizing: border-box;
   width: 100%;
   height: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+.result-card {
+  background: var(--surface);
+  border-radius: 24px;
+  padding: 32px 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  text-align: center;
+  position: relative;
+  z-index: 10;
+  border: 1px solid var(--border);
+  margin-top: 20px;
+}
+
+.success-icon {
+  margin: 0 auto 24px;
+  width: 80px;
+  height: 80px;
+}
+
+.checkmark {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: block;
+  stroke-width: 3;
+  stroke: var(--success);
+  stroke-miterlimit: 10;
+  filter: drop-shadow(0 2px 8px rgba(76, 175, 80, 0.4));
+}
+
+.result-title {
+  margin: 0 0 24px 0;
+  font-size: 28px;
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.bug-name {
+  margin: 0 0 8px 0;
+  font-size: 28px;
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.bug-info {
+  margin-bottom: 32px;
+}
+
+.bug-info h4 {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  color: var(--text-primary);
+}
+
+.scientific-name {
+  font-style: italic;
+  color: var(--text-secondary);
+  margin: 0 0 20px 0;
+  font-size: 16px;
+}
+
+.points-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-weight: 700;
+  font-size: 20px;
+  margin: 8px;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.rarity-badge {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin: 8px;
+  letter-spacing: 0.5px;
+}
+
+.rarity-common {
+  background: rgba(224, 224, 224, 0.2);
+  color: var(--text-secondary);
+  border: 1px solid rgba(224, 224, 224, 0.3);
+}
+
+.rarity-uncommon {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4caf50;
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.rarity-rare {
+  background: rgba(33, 150, 243, 0.2);
+  color: #2196f3;
+  border: 1px solid rgba(33, 150, 243, 0.3);
+}
+
+.rarity-epic {
+  background: rgba(156, 39, 176, 0.2);
+  color: #9c27b0;
+  border: 1px solid rgba(156, 39, 176, 0.3);
+}
+
+.rarity-legendary {
+  background: rgba(255, 152, 0, 0.2);
+  color: #ff9800;
+  border: 1px solid rgba(255, 152, 0, 0.3);
 }
 
 /* Confetti Animation */
@@ -210,113 +357,3 @@
   top: -10px;
   border-radius: 2px;
 }
-
-/* Result Card */
-.result-card {
-  background: white;
-  border-radius: 16px;
-  padding: 32px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  position: relative;
-  z-index: 10;
-}
-
-/* Success Icon */
-.success-icon {
-  margin: 0 auto 20px;
-  width: 80px;
-  height: 80px;
-}
-
-.checkmark {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  display: block;
-  stroke-width: 3;
-  stroke: #4caf50;
-  stroke-miterlimit: 10;
-  filter: drop-shadow(0 2px 4px rgba(76, 175, 80, 0.3));
-}
-
-.result-title {
-  margin: 0 0 24px 0;
-  font-size: 32px;
-  color: #333;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #667eea 100%);
-  background-size: 200% 200%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.bug-name {
-  margin: 0 0 8px 0;
-  font-size: 32px;
-  color: #333;
-}
-
-.bug-info {
-  margin-bottom: 24px;
-}
-
-.bug-info h4 {
-  margin: 0 0 8px 0;
-  font-size: 28px;
-  color: #333;
-}
-
-.scientific-name {
-  font-style: italic;
-  color: #666;
-  margin: 0 0 16px 0;
-}
-
-.points-badge {
-  display: inline-block;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 12px 24px;
-  border-radius: 25px;
-  font-weight: 700;
-  font-size: 20px;
-  margin: 8px;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-}
-
-.rarity-badge {
-  display: inline-block;
-  padding: 6px 12px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  margin: 8px;
-}
-
-.rarity-common {
-  background: #e0e0e0;
-  color: #666;
-}
-
-.rarity-uncommon {
-  background: #4caf50;
-  color: white;
-}
-
-.rarity-rare {
-  background: #2196f3;
-  color: white;
-}
-
-.rarity-epic {
-  background: #9c27b0;
-  color: white;
-}
-
-.rarity-legendary {
-  background: #ff9800;
-  color: white;
-}
-

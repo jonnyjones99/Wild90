@@ -1,6 +1,7 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { Auth } from './components/Auth'
+import { PasswordReset } from './components/PasswordReset'
 import { Navigation } from './components/Navigation'
 import { CameraScanner } from './components/CameraScanner'
 import { Profile } from './components/Profile'
@@ -22,9 +23,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AppLayout() {
+  const location = useLocation()
+  const isScanPage = location.pathname === '/scan'
+  
   return (
     <div className="app-layout">
-      <Navigation />
       <main className="app-main">
         <Routes>
           <Route path="/scan" element={<CameraScanner />} />
@@ -33,6 +36,7 @@ function AppLayout() {
           <Route path="/" element={<Navigate to="/scan" replace />} />
         </Routes>
       </main>
+      <Navigation />
     </div>
   )
 }
@@ -43,6 +47,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/auth" element={<Auth />} />
+          <Route path="/reset-password" element={<PasswordReset />} />
           <Route
             path="/*"
             element={

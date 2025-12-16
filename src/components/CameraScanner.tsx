@@ -367,25 +367,18 @@ export function CameraScanner() {
         onClose={() => setEarnedBadge(null)}
       />
       <div className="scanner-header">
-        <h2>Scan a Bug</h2>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <h2>Wild90</h2>
+        <div className="scanner-header-actions">
           {!stream && (
             <button onClick={startCamera} className="btn-primary">
-              Start Camera
+              Start
             </button>
           )}
           {stream && (
             <button onClick={stopCamera} className="btn-secondary">
-              Stop Camera
+              Stop
             </button>
           )}
-          <button 
-            onClick={testBadge} 
-            className="btn-test"
-            title="Test badge notification"
-          >
-            🏆 Test Badge
-          </button>
         </div>
       </div>
 

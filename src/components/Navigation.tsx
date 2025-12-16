@@ -1,42 +1,46 @@
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import './Navigation.css'
 
 export function Navigation() {
   const { signOut } = useAuth()
   const location = useLocation()
+  const navigate = useNavigate()
 
   const isActive = (path: string) => location.pathname === path
 
+  const handleSignOut = async () => {
+    await signOut()
+    navigate('/auth')
+  }
+
   return (
-    <nav className="navigation">
-      <div className="nav-brand">
-        <Link to="/">Wild90</Link>
-      </div>
-      <div className="nav-links">
+    <>
+      <nav className="bottom-navigation">
         <Link
           to="/scan"
-          className={isActive('/scan') ? 'active' : ''}
+          className={`nav-item ${isActive('/scan') ? 'active' : ''}`}
         >
-          Scan
+          <div className="nav-icon">📸</div>
+          <span className="nav-label">Scan</span>
         </Link>
         <Link
           to="/leaderboard"
-          className={isActive('/leaderboard') ? 'active' : ''}
+          className={`nav-item ${isActive('/leaderboard') ? 'active' : ''}`}
         >
-          Leaderboard
+          <div className="nav-icon">🏆</div>
+          <span className="nav-label">Leaderboard</span>
         </Link>
         <Link
           to="/profile"
-          className={isActive('/profile') ? 'active' : ''}
+          className={`nav-item ${isActive('/profile') ? 'active' : ''}`}
         >
-          Profile
+          <div className="nav-icon">👤</div>
+          <span className="nav-label">Profile</span>
         </Link>
-        <button onClick={signOut} className="nav-signout">
-          Sign Out
-        </button>
-      </div>
-    </nav>
+      </nav>
+      {/* Sign out is now in Profile component */}
+    </>
   )
 }
 

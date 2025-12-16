@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import "./Auth.css";
 
@@ -74,6 +74,12 @@ export function Auth() {
             {loading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
           </button>
         </form>
+
+        {!isSignUp && (
+          <Link to="/reset-password" className="forgot-password-link">
+            Forgot password?
+          </Link>
+        )}
 
         <button
           type="button"
