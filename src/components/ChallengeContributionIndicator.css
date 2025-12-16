@@ -15,16 +15,15 @@
   background: var(--surface);
   border: 2px solid var(--accent);
   border-radius: 20px;
-  padding: 16px 20px;
+  padding: 14px 18px;
   display: flex;
   align-items: center;
   gap: 12px;
   box-shadow: 0 8px 24px rgba(202, 138, 4, 0.4);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  min-width: 280px;
+  width: 100%;
   animation: glow 2s ease-in-out infinite;
-  margin: 0 auto;
 }
 
 @keyframes glow {

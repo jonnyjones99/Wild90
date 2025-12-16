@@ -5,7 +5,6 @@ import { supabase } from '../lib/supabase'
 import type { Bug, Badge } from '../types/database'
 import { Confetti } from './Confetti'
 import { BadgeNotification } from './BadgeNotification'
-import { ChallengeContributionIndicator } from './ChallengeContributionIndicator'
 import './CameraScanner.css'
 
 export function CameraScanner() {
@@ -19,7 +18,14 @@ export function CameraScanner() {
   const [loading, setLoading] = useState(false)
   const [flash, setFlash] = useState(false)
   const [earnedBadge, setEarnedBadge] = useState<Badge | null>(null)
-  const [challengeContribution, setChallengeContribution] = useState<string | null>(null)
+  const [capturedImage, setCapturedImage] = useState<string | null>(null)
+  const [challengeProgress, setChallengeProgress] = useState<{
+    challengeId: string
+    name: string
+    icon: string
+    current: number
+    target: number
+  } | null>(null)
 
   // Handle video stream attachment
   useEffect(() => {
@@ -167,6 +173,9 @@ export function CameraScanner() {
       if (!imageData) {
         throw new Error('Failed to capture image')
       }
+      
+      // Store captured image for display
+      setCapturedImage(imageData)
 
       // For POC: Simulate bug detection
       // In production, you'd use ML/AI to identify the bug
@@ -200,11 +209,11 @@ export function CameraScanner() {
 
         setScannedBug(detectedBug)
         
-        // Check if this bug contributes to a community challenge
-        // Delay to show after scan result appears
-        setTimeout(() => {
-          checkChallengeContribution(detectedBug)
-        }, 1500)
+        // Trigger haptic feedback on successful scan
+        triggerHapticFeedback('success')
+        
+        // Check if this bug contributes to a community challenge and load progress
+        checkChallengeContribution(detectedBug)
         
         // Check for badge achievements with a small delay to let DB trigger complete
         setTimeout(async () => {
@@ -291,6 +300,9 @@ export function CameraScanner() {
   const handleNewScan = async () => {
     setScannedBug(null)
     setError(null)
+    setCapturedImage(null)
+    setChallengeProgress(null)
+    triggerHapticFeedback('light')
     
     // Small delay to ensure DOM is ready
     await new Promise(resolve => setTimeout(resolve, 100))
@@ -320,34 +332,119 @@ export function CameraScanner() {
   }
 
   // Test function to show badge notification (mock for testing)
-  const checkChallengeContribution = (bug: Bug) => {
+  const triggerHapticFeedback = (type: 'success' | 'error' | 'light' | 'medium' | 'heavy') => {
+    if ('vibrate' in navigator) {
+      try {
+        switch (type) {
+          case 'success':
+            // Success pattern: medium, pause, light
+            navigator.vibrate([50, 30, 50])
+            break
+          case 'error':
+            navigator.vibrate([100, 50, 100])
+            break
+          case 'light':
+            navigator.vibrate(10)
+            break
+          case 'medium':
+            navigator.vibrate(50)
+            break
+          case 'heavy':
+            navigator.vibrate(100)
+            break
+        }
+      } catch (err) {
+        // Haptics not supported or failed
+        console.log('Haptic feedback not available')
+      }
+    }
+  }
+
+  const checkChallengeContribution = async (bug: Bug) => {
     const bugNameLower = bug.name.toLowerCase()
-    console.log('Checking challenge contribution for bug:', bug.name, bug.rarity)
     
-    // Check if bug matches any challenge
+    // Determine which challenge this bug contributes to
+    let challengeId: string | null = null
+    let challengeName = ''
+    let challengeIcon = ''
+    
     if (bugNameLower.includes('butterfly')) {
-      console.log('Matched butterfly challenge!')
-      setChallengeContribution('butterfly-challenge')
-      setTimeout(() => {
-        console.log('Clearing butterfly challenge indicator')
-        setChallengeContribution(null)
-      }, 4000)
+      challengeId = 'butterfly-challenge'
+      challengeName = 'Butterfly Migration'
+      challengeIcon = '🦋'
     } else if (bugNameLower.includes('bee') || bugNameLower.includes('honeybee')) {
-      console.log('Matched bee challenge!')
-      setChallengeContribution('bee-challenge')
-      setTimeout(() => {
-        console.log('Clearing bee challenge indicator')
-        setChallengeContribution(null)
-      }, 4000)
+      challengeId = 'bee-challenge'
+      challengeName = 'Bee Colony'
+      challengeIcon = '🐝'
     } else if (['rare', 'epic', 'legendary'].includes(bug.rarity)) {
-      console.log('Matched rare challenge!', bug.rarity)
-      setChallengeContribution('rare-challenge')
-      setTimeout(() => {
-        console.log('Clearing rare challenge indicator')
-        setChallengeContribution(null)
-      }, 4000)
-    } else {
-      console.log('No challenge match')
+      challengeId = 'rare-challenge'
+      challengeName = 'Rare Discovery'
+      challengeIcon = '✨'
+    }
+    
+    if (challengeId) {
+      // Load current progress for this challenge
+      await loadChallengeProgress(challengeId, challengeName, challengeIcon)
+    }
+  }
+
+  const loadChallengeProgress = async (challengeId: string, challengeName: string, challengeIcon: string) => {
+    try {
+      let current = 0
+      
+      if (challengeId === 'rare-challenge') {
+        // Count rare/epic/legendary bugs
+        const { data: rareBugs, error: rareBugsError } = await supabase
+          .from('bugs')
+          .select('id')
+          .in('rarity', ['rare', 'epic', 'legendary'])
+
+        if (!rareBugsError && rareBugs && rareBugs.length > 0) {
+          const rareBugIds = rareBugs.map(b => b.id)
+          const { data: scans, error: scansError } = await supabase
+            .from('bug_scans')
+            .select('bug_id')
+            .in('bug_id', rareBugIds)
+
+          if (!scansError && scans) {
+            const distinctBugs = new Set(scans.map(scan => scan.bug_id))
+            current = distinctBugs.size
+          }
+        }
+      } else {
+        // Count specific bug type
+        const bugType = challengeId === 'butterfly-challenge' ? 'butterfly' : 'bee'
+        const { data: bugs, error: bugsError } = await supabase
+          .from('bugs')
+          .select('id, name')
+          .ilike('name', `%${bugType}%`)
+
+        if (!bugsError && bugs && bugs.length > 0) {
+          const bugIds = bugs.map(b => b.id)
+          const { data: scans, error: scansError } = await supabase
+            .from('bug_scans')
+            .select('bug_id')
+            .in('bug_id', bugIds)
+
+          if (!scansError && scans) {
+            const distinctBugs = new Set(scans.map(scan => scan.bug_id))
+            current = distinctBugs.size
+          }
+        }
+      }
+
+      // Set challenge progress (targets match CommunityChallenges component)
+      const target = challengeId === 'butterfly-challenge' ? 30 : challengeId === 'bee-challenge' ? 50 : 20
+      
+      setChallengeProgress({
+        challengeId,
+        name: challengeName,
+        icon: challengeIcon,
+        current,
+        target,
+      })
+    } catch (err) {
+      console.error('Error loading challenge progress:', err)
     }
   }
 
@@ -405,11 +502,6 @@ export function CameraScanner() {
         badge={earnedBadge}
         onClose={() => setEarnedBadge(null)}
       />
-      <AnimatePresence>
-        {challengeContribution && (
-          <ChallengeContributionIndicator key={challengeContribution} challengeId={challengeContribution} />
-        )}
-      </AnimatePresence>
       <div className="scanner-header">
         <h2>Wild90</h2>
         <div className="scanner-header-actions">
@@ -501,126 +593,155 @@ export function CameraScanner() {
             <Confetti />
             <motion.div
               className="result-card"
-              initial={{ scale: 0.8, opacity: 0, y: 50 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
               transition={{
                 type: "spring",
                 stiffness: 300,
-                damping: 25,
-                delay: 0.2
+                damping: 25
               }}
             >
+              {/* Bug Image */}
               <motion.div
-                className="success-icon"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
+                className="bug-image-container"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
                 transition={{
                   type: "spring",
                   stiffness: 200,
                   damping: 15,
-                  delay: 0.4
+                  delay: 0.2
                 }}
               >
-                <svg
-                  className="checkmark"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 52 52"
-                >
-                  <motion.circle
-                    className="checkmark-circle"
-                    cx="26"
-                    cy="26"
-                    r="25"
-                    fill="none"
-                    stroke="#4caf50"
-                    strokeWidth="3"
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
-                    transition={{ duration: 0.5, delay: 0.5 }}
+                {capturedImage ? (
+                  <img
+                    src={capturedImage}
+                    alt={scannedBug.name}
+                    className="bug-captured-image"
                   />
-                  <motion.path
-                    className="checkmark-check"
-                    fill="none"
-                    stroke="#4caf50"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M14.1 27.2l7.1 7.2 16.7-16.8"
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
-                    transition={{ duration: 0.3, delay: 1 }}
+                ) : scannedBug.image_url ? (
+                  <img
+                    src={scannedBug.image_url}
+                    alt={scannedBug.name}
+                    className="bug-captured-image"
                   />
-                </svg>
+                ) : (
+                  <div className="bug-image-placeholder-large">🐛</div>
+                )}
+                <div className="bug-image-overlay">
+                  <motion.div
+                    className="success-check"
+                    initial={{ scale: 0, rotate: -180 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 200,
+                      damping: 15,
+                      delay: 0.5
+                    }}
+                  >
+                    ✓
+                  </motion.div>
+                </div>
               </motion.div>
 
-              <motion.h3
-                className="result-title"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.8 }}
-              >
-                Bug Scanned!
-              </motion.h3>
-
-              <div className="bug-info">
-                <motion.h4
+              {/* Bug Info */}
+              <div className="bug-info-section">
+                <motion.h3
                   className="bug-name"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.9, type: "spring", stiffness: 200 }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
                 >
                   {scannedBug.name}
-                </motion.h4>
+                </motion.h3>
 
                 <motion.p
                   className="scientific-name"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: 1 }}
+                  transition={{ delay: 0.5 }}
                 >
                   {scannedBug.scientific_name}
                 </motion.p>
 
-                <motion.div
-                  className="points-badge"
-                  initial={{ scale: 0, rotate: -180 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{
-                    type: "spring",
-                    stiffness: 200,
-                    damping: 15,
-                    delay: 1.1
-                  }}
-                >
-                  +{scannedBug.points} points
-                </motion.div>
+                <div className="bug-stats-row">
+                  <motion.div
+                    className="points-badge"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 200,
+                      damping: 15,
+                      delay: 0.6
+                    }}
+                  >
+                    <span className="points-icon">⭐</span>
+                    <span className="points-value">+{scannedBug.points}</span>
+                  </motion.div>
 
-                <motion.div
-                  className={`rarity-badge rarity-${scannedBug.rarity}`}
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{
-                    type: "spring",
-                    stiffness: 200,
-                    damping: 15,
-                    delay: 1.3
-                  }}
-                >
-                  {scannedBug.rarity}
-                </motion.div>
+                  <motion.div
+                    className={`rarity-badge rarity-${scannedBug.rarity}`}
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 200,
+                      damping: 15,
+                      delay: 0.7
+                    }}
+                  >
+                    {scannedBug.rarity}
+                  </motion.div>
+                </div>
               </div>
 
-              <motion.button
-                onClick={handleNewScan}
-                className="btn-primary"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.5 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Scan Another Bug
-              </motion.button>
+              {/* Community Challenge Progress */}
+              {challengeProgress && (
+                <motion.div
+                  className="challenge-progress-section"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.9 }}
+                >
+                  <div className="challenge-progress-header">
+                    <span className="challenge-icon">{challengeProgress.icon}</span>
+                    <div className="challenge-info">
+                      <div className="challenge-title">Community Challenge</div>
+                      <div className="challenge-name">{challengeProgress.name}</div>
+                    </div>
+                  </div>
+                  <div className="challenge-progress-bar-container">
+                    <motion.div
+                      className="challenge-progress-bar-fill"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.min((challengeProgress.current / challengeProgress.target) * 100, 100)}%` }}
+                      transition={{ duration: 1, delay: 1, ease: "easeOut" }}
+                    />
+                  </div>
+                  <div className="challenge-progress-stats">
+                    <span className="progress-current">{challengeProgress.current}</span>
+                    <span className="progress-separator">/</span>
+                    <span className="progress-target">{challengeProgress.target}</span>
+                    <span className="progress-contribution">✓ You contributed!</span>
+                  </div>
+                </motion.div>
+              )}
+
+              <div style={{ padding: '0 20px 24px', width: '100%', boxSizing: 'border-box' }}>
+                <motion.button
+                  onClick={handleNewScan}
+                  className="scan-another-button"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: challengeProgress ? 1.1 : 0.8 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  Scan Another Bug
+                </motion.button>
+              </div>
             </motion.div>
           </motion.div>
         )}
