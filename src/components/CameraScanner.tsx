@@ -544,48 +544,52 @@ export function CameraScanner() {
               className="camera-video"
             />
             <canvas ref={canvasRef} style={{ display: 'none' }} />
-            <motion.button
-              onClick={scanBug}
-              disabled={loading || isScanning}
-              className="scan-button"
-              initial={{ x: '-50%' }}
-              animate={{ 
-                x: '-50%',
-                ...(loading ? {
-                  boxShadow: [
-                    "0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 0 rgba(101, 163, 13, 0.7)",
-                    "0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 10px rgba(101, 163, 13, 0)",
-                    "0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 0 rgba(101, 163, 13, 0.7)",
-                  ]
-                } : {})
-              }}
-              whileHover={loading ? {} : { 
-                scale: 1.05,
-                x: '-50%'
-              }}
-              whileTap={loading ? {} : { 
-                scale: 0.95,
-                x: '-50%'
-              }}
-              transition={{ 
-                duration: loading ? 1.5 : 0.2,
-                repeat: loading ? Infinity : 0,
-                x: { duration: 0 }
-              }}
-            >
-              {loading ? (
-                <>
-                  <motion.span
-                    className="scan-spinner"
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
-                  />
-                  Scanning...
-                </>
-              ) : (
-                '📸 Scan Bug'
-              )}
-            </motion.button>
+            {!scannedBug && (
+              <motion.button
+                onClick={scanBug}
+                disabled={loading || isScanning}
+                className="scan-button"
+                initial={{ x: '-50%', opacity: 0 }}
+                animate={{ 
+                  x: '-50%',
+                  opacity: 1,
+                  ...(loading ? {
+                    boxShadow: [
+                      "0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 0 rgba(101, 163, 13, 0.7)",
+                      "0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 10px rgba(101, 163, 13, 0)",
+                      "0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 0 rgba(101, 163, 13, 0.7)",
+                    ]
+                  } : {})
+                }}
+                whileHover={loading ? {} : { 
+                  scale: 1.05,
+                  x: '-50%'
+                }}
+                whileTap={loading ? {} : { 
+                  scale: 0.95,
+                  x: '-50%'
+                }}
+                transition={{ 
+                  duration: loading ? 1.5 : 0.2,
+                  repeat: loading ? Infinity : 0,
+                  x: { duration: 0 },
+                  opacity: { duration: 0.3 }
+                }}
+              >
+                {loading ? (
+                  <>
+                    <motion.span
+                      className="scan-spinner"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+                    />
+                    Scanning...
+                  </>
+                ) : (
+                  '📸 Scan Bug'
+                )}
+              </motion.button>
+            )}
           </>
         ) : (
           <div className="camera-placeholder">

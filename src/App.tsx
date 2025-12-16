@@ -7,6 +7,8 @@ import { CameraScanner } from './components/CameraScanner'
 import { Profile } from './components/Profile'
 import { Leaderboard } from './components/Leaderboard'
 import { Pokedex } from './components/Pokedex'
+import { Quests } from './components/Quests'
+import { ProfileButton } from './components/ProfileButton'
 import './App.css'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -29,10 +31,12 @@ function AppLayout() {
   
   return (
     <div className="app-layout">
+      <ProfileButton />
       <main className="app-main">
         <Routes>
           <Route path="/scan" element={<CameraScanner />} />
           <Route path="/pokedex" element={<Pokedex />} />
+          <Route path="/quests" element={<Quests />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/" element={<Navigate to="/scan" replace />} />

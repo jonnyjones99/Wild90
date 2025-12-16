@@ -22,6 +22,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding-right: calc(60px + 16px); /* Make room for profile button */
 }
 
 .scanner-header h2 {

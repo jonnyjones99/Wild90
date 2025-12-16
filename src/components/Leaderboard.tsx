@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import type { UserProfile } from '../types/database'
-import { CommunityChallenges } from './CommunityChallenges'
 import './Leaderboard.css'
 
 export function Leaderboard() {
@@ -77,8 +76,6 @@ export function Leaderboard() {
         <h2>🏆 Leaderboard</h2>
         <p className="leaderboard-subtitle">Top Bug Scanners</p>
       </div>
-
-      <CommunityChallenges />
 
       {currentUserRank > 0 && currentUserRank > 10 && (
         <div className="user-rank-banner">

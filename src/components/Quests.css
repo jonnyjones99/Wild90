@@ -1,0 +1,30 @@
+.quests {
+  padding: calc(20px + env(safe-area-inset-top)) 20px calc(100px + env(safe-area-inset-bottom));
+  max-width: 600px;
+  margin: 0 auto;
+  min-height: 100vh;
+  -webkit-overflow-scrolling: touch;
+}
+
+.quests-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.quests-header h1 {
+  margin: 0 0 8px 0;
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--text-primary);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--nature-sage) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.quests-subtitle {
+  margin: 0;
+  font-size: 15px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}

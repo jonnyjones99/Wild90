@@ -32,18 +32,18 @@ export function Navigation() {
           <span className="nav-label">BugDex</span>
         </Link>
         <Link
+          to="/quests"
+          className={`nav-item ${isActive('/quests') ? 'active' : ''}`}
+        >
+          <div className="nav-icon">🎯</div>
+          <span className="nav-label">Quests</span>
+        </Link>
+        <Link
           to="/leaderboard"
           className={`nav-item ${isActive('/leaderboard') ? 'active' : ''}`}
         >
           <div className="nav-icon">🏆</div>
           <span className="nav-label">Leaderboard</span>
-        </Link>
-        <Link
-          to="/profile"
-          className={`nav-item ${isActive('/profile') ? 'active' : ''}`}
-        >
-          <div className="nav-icon">👤</div>
-          <span className="nav-label">Profile</span>
         </Link>
       </nav>
       {/* Sign out is now in Profile component */}

@@ -1,0 +1,41 @@
+.profile-button {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top));
+  right: 16px;
+  width: 44px;
+  height: 44px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10001;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  -webkit-tap-highlight-color: transparent;
+  padding: 0;
+}
+
+/* On camera scanner, make it more visible */
+.camera-scanner ~ .profile-button,
+.camera-scanner .profile-button {
+  background: rgba(30, 41, 59, 0.9);
+  border-color: rgba(101, 163, 13, 0.5);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+}
+
+.profile-button:active {
+  transform: scale(0.95);
+  background: var(--surface-elevated);
+  border-color: var(--primary);
+}
+
+.profile-icon {
+  font-size: 22px;
+  line-height: 1;
+  display: block;
+}

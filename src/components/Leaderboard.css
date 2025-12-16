@@ -1,5 +1,5 @@
 .leaderboard {
-  padding: calc(20px + env(safe-area-inset-top)) 20px calc(100px + env(safe-area-inset-bottom));
+  padding: calc(60px + env(safe-area-inset-top)) 20px calc(100px + env(safe-area-inset-bottom));
   max-width: 600px;
   margin: 0 auto;
   min-height: 100vh;
