@@ -30,7 +30,7 @@ function ConfettiPiece({ delay, color, x }: ConfettiPieceProps) {
 }
 
 export function Confetti() {
-  const colors = ['#667eea', '#764ba2', '#ffd700', '#ff6b6b', '#4ecdc4', '#45b7d1']
+  const colors = ['#65a30d', '#84cc16', '#ca8a04', '#fbbf24', '#f59e0b', '#92400e', '#a16207', '#78716c']
   const pieces = Array.from({ length: 50 }, (_, i) => ({
     id: i,
     delay: Math.random() * 0.5,
