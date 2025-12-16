@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
-import type { Bug, BugScan, Badge } from '../types/database'
+import type { Bug, Badge } from '../types/database'
 import { Confetti } from './Confetti'
 import { BadgeNotification } from './BadgeNotification'
 import './CameraScanner.css'
@@ -172,15 +172,13 @@ export function CameraScanner() {
 
       if (detectedBug) {
         // Save scan to database
-        const { data: scan, error: scanError } = await supabase
+        const { error: scanError } = await supabase
           .from('bug_scans')
           .insert({
             user_id: user.id,
             bug_id: detectedBug.id,
             image_url: imageData, // In production, upload to storage first
           })
-          .select()
-          .single()
 
         if (scanError) throw scanError
 
@@ -218,7 +216,7 @@ export function CameraScanner() {
 
   // POC: Simulate bug detection by randomly selecting from database
   // In production, replace with actual ML model or API
-  const detectBug = async (imageData: string): Promise<Bug | null> => {
+  const detectBug = async (_imageData: string): Promise<Bug | null> => {
     try {
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1500))

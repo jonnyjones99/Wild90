@@ -21,7 +21,7 @@ export function Leaderboard() {
 
       const { data, error: queryError } = await supabase
         .from('user_profiles')
-        .select('id, email, username, total_score, bugs_scanned, created_at')
+        .select('id, email, username, total_score, bugs_scanned, created_at, updated_at')
         .order('total_score', { ascending: false })
         .limit(100)
 

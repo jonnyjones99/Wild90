@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
-import type { UserProfile, Badge, UserBadge } from '../types/database'
+import type { UserProfile, UserBadge } from '../types/database'
 import './Profile.css'
 
 export function Profile() {
