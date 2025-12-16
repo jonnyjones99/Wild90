@@ -1,7 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
-import type { Bug, BugScan } from '../types/database'
+import type { Bug, BugScan, Badge } from '../types/database'
+import { Confetti } from './Confetti'
+import { BadgeNotification } from './BadgeNotification'
 import './CameraScanner.css'
 
 export function CameraScanner() {
@@ -13,6 +16,8 @@ export function CameraScanner() {
   const [scannedBug, setScannedBug] = useState<Bug | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [flash, setFlash] = useState(false)
+  const [earnedBadge, setEarnedBadge] = useState<Badge | null>(null)
 
   // Handle video stream attachment
   useEffect(() => {
@@ -25,14 +30,55 @@ export function CameraScanner() {
     }
     
     return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop())
-      }
-      if (videoRef.current) {
-        videoRef.current.srcObject = null
-      }
+      // Don't stop the stream here - only stop when explicitly stopping camera
+      // This allows the stream to persist when switching views
     }
   }, [stream])
+
+  // Keep video playing when camera view is shown
+  useEffect(() => {
+    if (!scannedBug && stream) {
+      // When scan result is cleared, ensure video is visible and playing
+      const playVideo = async () => {
+        if (videoRef.current && stream) {
+          // Check if stream is still active
+          const tracks = stream.getVideoTracks()
+          if (tracks.length === 0 || tracks[0].readyState !== 'live') {
+            console.warn('Stream is not active, camera may need to be restarted')
+            return
+          }
+          
+          // Reattach stream if needed
+          if (videoRef.current.srcObject !== stream) {
+            videoRef.current.srcObject = stream
+          }
+          
+          // Ensure video is playing
+          try {
+            if (videoRef.current.paused) {
+              await videoRef.current.play()
+            }
+          } catch (err) {
+            console.error('Error playing video:', err)
+            // Retry once
+            setTimeout(async () => {
+              if (videoRef.current && stream) {
+                try {
+                  await videoRef.current.play()
+                } catch (e) {
+                  console.error('Retry play failed:', e)
+                }
+              }
+            }, 300)
+          }
+        }
+      }
+      
+      // Delay to ensure DOM is ready after display change
+      const timeout = setTimeout(playVideo, 150)
+      return () => clearTimeout(timeout)
+    }
+  }, [stream, scannedBug])
 
   const startCamera = async () => {
     try {
@@ -84,6 +130,7 @@ export function CameraScanner() {
     }
     if (videoRef.current) {
       videoRef.current.srcObject = null
+      videoRef.current.pause()
     }
   }
 
@@ -109,6 +156,10 @@ export function CameraScanner() {
     setError(null)
 
     try {
+      // Flash effect
+      setFlash(true)
+      setTimeout(() => setFlash(false), 200)
+
       // Capture photo
       const imageData = capturePhoto()
       if (!imageData) {
@@ -133,6 +184,14 @@ export function CameraScanner() {
 
         if (scanError) throw scanError
 
+        // Get current badges before updating
+        const { data: badgesBefore } = await supabase
+          .from('user_badges')
+          .select('badge_id')
+          .eq('user_id', user.id)
+
+        const badgeIdsBefore = new Set((badgesBefore || []).map(b => b.badge_id))
+
         // Update user score
         await supabase.rpc('increment_user_score', {
           user_id: user.id,
@@ -141,8 +200,10 @@ export function CameraScanner() {
 
         setScannedBug(detectedBug)
         
-        // Check for badge achievements
-        checkBadges(user.id)
+        // Check for badge achievements with a small delay to let DB trigger complete
+        setTimeout(async () => {
+          await checkBadges(user.id, badgeIdsBefore)
+        }, 500)
       } else {
         setError('No bug detected. Try scanning a different angle.')
       }
@@ -187,89 +248,349 @@ export function CameraScanner() {
     }
   }
 
-  const checkBadges = async (userId: string) => {
+  const checkBadges = async (userId: string, badgeIdsBefore: Set<string>) => {
     try {
-      // Call the database function to check and award badges
-      const { error } = await supabase.rpc('check_and_award_badges', {
-        p_user_id: userId
-      })
-      if (error) {
-        console.error('Error checking badges:', error)
+      // Get current badges after potential award
+      const { data: userBadges, error: fetchError } = await supabase
+        .from('user_badges')
+        .select('*, badge:badges(*)')
+        .eq('user_id', userId)
+        .order('earned_at', { ascending: false })
+
+      if (fetchError) {
+        console.error('Error fetching badges:', fetchError)
+        return
+      }
+
+      // Find newly earned badges
+      if (userBadges && userBadges.length > 0) {
+        const newBadges = userBadges.filter(
+          ub => !badgeIdsBefore.has(ub.badge_id) && ub.badge
+        )
+
+        // Show notification for the most recently earned badge
+        if (newBadges.length > 0) {
+          const latestBadge = newBadges[0].badge as Badge
+          // Delay to show after scan result animation
+          setTimeout(() => {
+            setEarnedBadge(latestBadge)
+          }, 2000)
+        }
       }
     } catch (err) {
       console.error('Error in checkBadges:', err)
     }
   }
 
-  const handleNewScan = () => {
+  const handleNewScan = async () => {
     setScannedBug(null)
     setError(null)
+    
+    // Small delay to ensure DOM is ready
+    await new Promise(resolve => setTimeout(resolve, 100))
+    
+    // Ensure video continues playing when returning to camera view
+    if (videoRef.current && stream) {
+      // Reattach the stream
+      videoRef.current.srcObject = stream
+      
+      // Force play
+      try {
+        await videoRef.current.play()
+      } catch (err) {
+        console.error('Error playing video after scan:', err)
+        // If play fails, try again after a short delay
+        setTimeout(async () => {
+          if (videoRef.current && stream) {
+            try {
+              await videoRef.current.play()
+            } catch (e) {
+              console.error('Retry play failed:', e)
+            }
+          }
+        }, 200)
+      }
+    }
+  }
+
+  // Test function to show badge notification (mock for testing)
+  const testBadge = async () => {
+    if (!user) return
+
+    // Clear any existing badge first
+    setEarnedBadge(null)
+    
+    // Small delay to ensure state clears
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    try {
+      // Get a badge from the database to show (just for display)
+      const { data: badges, error: badgeError } = await supabase
+        .from('badges')
+        .select('*')
+        .limit(1)
+        .single()
+
+      if (badgeError || !badges) {
+        // If no badge in DB, use a mock badge for testing
+        const mockBadge: Badge = {
+          id: 'test-badge-' + Date.now(),
+          name: 'First Scan',
+          description: 'Scan your first bug!',
+          requirement_type: 'scan_count',
+          requirement_value: '1',
+          created_at: new Date().toISOString(),
+        }
+        setEarnedBadge(mockBadge)
+        return
+      }
+
+      // Show the notification with a real badge (just for testing the UI)
+      setEarnedBadge(badges as Badge)
+    } catch (err) {
+      console.error('Error testing badge:', err)
+      // Fallback to mock badge
+      const mockBadge: Badge = {
+        id: 'test-badge-' + Date.now(),
+        name: 'Test Badge',
+        description: 'This is a test badge notification!',
+        requirement_type: 'scan_count',
+        requirement_value: '1',
+        created_at: new Date().toISOString(),
+      }
+      setEarnedBadge(mockBadge)
+    }
   }
 
   return (
     <div className="camera-scanner">
+      <BadgeNotification
+        badge={earnedBadge}
+        onClose={() => setEarnedBadge(null)}
+      />
       <div className="scanner-header">
         <h2>Scan a Bug</h2>
-        {!stream && (
-          <button onClick={startCamera} className="btn-primary">
-            Start Camera
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {!stream && (
+            <button onClick={startCamera} className="btn-primary">
+              Start Camera
+            </button>
+          )}
+          {stream && (
+            <button onClick={stopCamera} className="btn-secondary">
+              Stop Camera
+            </button>
+          )}
+          <button 
+            onClick={testBadge} 
+            className="btn-test"
+            title="Test badge notification"
+          >
+            🏆 Test Badge
           </button>
-        )}
-        {stream && (
-          <button onClick={stopCamera} className="btn-secondary">
-            Stop Camera
-          </button>
-        )}
+        </div>
       </div>
 
       {error && <div className="error-banner">{error}</div>}
 
-      {scannedBug ? (
-        <div className="scan-result">
-          <div className="result-card">
-            <h3>Bug Scanned! 🎉</h3>
-            <div className="bug-info">
-              <h4>{scannedBug.name}</h4>
-              <p className="scientific-name">{scannedBug.scientific_name}</p>
-              <div className="points-badge">
-                +{scannedBug.points} points
-              </div>
-              <div className={`rarity-badge rarity-${scannedBug.rarity}`}>
-                {scannedBug.rarity}
-              </div>
-            </div>
-            <button onClick={handleNewScan} className="btn-primary">
-              Scan Another Bug
-            </button>
-          </div>
-        </div>
-      ) : (
+      {/* Camera view - always visible, scan result overlays on top */}
+      <div className="scanner-content">
         <div className="camera-container">
-          {stream ? (
-            <>
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                className="camera-video"
-              />
-              <canvas ref={canvasRef} style={{ display: 'none' }} />
-              <button
-                onClick={scanBug}
-                disabled={loading || isScanning}
-                className="scan-button"
-              >
-                {loading ? 'Scanning...' : '📸 Scan Bug'}
-              </button>
-            </>
-          ) : (
-            <div className="camera-placeholder">
-              <p>Click "Start Camera" to begin scanning</p>
-            </div>
-          )}
+        {stream ? (
+          <>
+            <AnimatePresence>
+              {flash && (
+                <motion.div
+                  className="camera-flash"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                />
+              )}
+            </AnimatePresence>
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="camera-video"
+            />
+            <canvas ref={canvasRef} style={{ display: 'none' }} />
+            <motion.button
+              onClick={scanBug}
+              disabled={loading || isScanning}
+              className="scan-button"
+              whileHover={{ scale: loading ? 1 : 1.05 }}
+              whileTap={{ scale: loading ? 1 : 0.95 }}
+              animate={loading ? {
+                boxShadow: [
+                  "0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 0 rgba(102, 126, 234, 0.7)",
+                  "0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 10px rgba(102, 126, 234, 0)",
+                  "0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 0 rgba(102, 126, 234, 0.7)",
+                ]
+              } : {}}
+              transition={{ duration: 1.5, repeat: loading ? Infinity : 0 }}
+            >
+              {loading ? (
+                <>
+                  <motion.span
+                    className="scan-spinner"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+                  />
+                  Scanning...
+                </>
+              ) : (
+                '📸 Scan Bug'
+              )}
+            </motion.button>
+          </>
+        ) : (
+          <div className="camera-placeholder">
+            <p>Click "Start Camera" to begin scanning</p>
+          </div>
+        )}
         </div>
-      )}
+
+        {/* Scan result - show on top when available */}
+      <AnimatePresence>
+        {scannedBug && (
+          <motion.div
+            key="result"
+            className="scan-result"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <Confetti />
+            <motion.div
+              className="result-card"
+              initial={{ scale: 0.8, opacity: 0, y: 50 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              transition={{
+                type: "spring",
+                stiffness: 300,
+                damping: 25,
+                delay: 0.2
+              }}
+            >
+              <motion.div
+                className="success-icon"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 200,
+                  damping: 15,
+                  delay: 0.4
+                }}
+              >
+                <svg
+                  className="checkmark"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 52 52"
+                >
+                  <motion.circle
+                    className="checkmark-circle"
+                    cx="26"
+                    cy="26"
+                    r="25"
+                    fill="none"
+                    stroke="#4caf50"
+                    strokeWidth="3"
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: 1 }}
+                    transition={{ duration: 0.5, delay: 0.5 }}
+                  />
+                  <motion.path
+                    className="checkmark-check"
+                    fill="none"
+                    stroke="#4caf50"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M14.1 27.2l7.1 7.2 16.7-16.8"
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: 1 }}
+                    transition={{ duration: 0.3, delay: 1 }}
+                  />
+                </svg>
+              </motion.div>
+
+              <motion.h3
+                className="result-title"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.8 }}
+              >
+                Bug Scanned!
+              </motion.h3>
+
+              <div className="bug-info">
+                <motion.h4
+                  className="bug-name"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.9, type: "spring", stiffness: 200 }}
+                >
+                  {scannedBug.name}
+                </motion.h4>
+
+                <motion.p
+                  className="scientific-name"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1 }}
+                >
+                  {scannedBug.scientific_name}
+                </motion.p>
+
+                <motion.div
+                  className="points-badge"
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 200,
+                    damping: 15,
+                    delay: 1.1
+                  }}
+                >
+                  +{scannedBug.points} points
+                </motion.div>
+
+                <motion.div
+                  className={`rarity-badge rarity-${scannedBug.rarity}`}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 200,
+                    damping: 15,
+                    delay: 1.3
+                  }}
+                >
+                  {scannedBug.rarity}
+                </motion.div>
+              </div>
+
+              <motion.button
+                onClick={handleNewScan}
+                className="btn-primary"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.5 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Scan Another Bug
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      </div>
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { Auth } from './components/Auth'
 import { Navigation } from './components/Navigation'
 import { CameraScanner } from './components/CameraScanner'
 import { Profile } from './components/Profile'
+import { Leaderboard } from './components/Leaderboard'
 import './App.css'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -27,6 +28,7 @@ function AppLayout() {
       <main className="app-main">
         <Routes>
           <Route path="/scan" element={<CameraScanner />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/" element={<Navigate to="/scan" replace />} />
         </Routes>

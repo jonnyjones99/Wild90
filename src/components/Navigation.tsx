@@ -21,6 +21,12 @@ export function Navigation() {
           Scan
         </Link>
         <Link
+          to="/leaderboard"
+          className={isActive('/leaderboard') ? 'active' : ''}
+        >
+          Leaderboard
+        </Link>
+        <Link
           to="/profile"
           className={isActive('/profile') ? 'active' : ''}
         >
