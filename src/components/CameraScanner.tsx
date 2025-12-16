@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import type { Bug, Badge } from '../types/database'
 import { Confetti } from './Confetti'
 import { BadgeNotification } from './BadgeNotification'
+import { ChallengeContributionIndicator } from './ChallengeContributionIndicator'
 import './CameraScanner.css'
 
 export function CameraScanner() {
@@ -18,6 +19,7 @@ export function CameraScanner() {
   const [loading, setLoading] = useState(false)
   const [flash, setFlash] = useState(false)
   const [earnedBadge, setEarnedBadge] = useState<Badge | null>(null)
+  const [challengeContribution, setChallengeContribution] = useState<string | null>(null)
 
   // Handle video stream attachment
   useEffect(() => {
@@ -198,6 +200,12 @@ export function CameraScanner() {
 
         setScannedBug(detectedBug)
         
+        // Check if this bug contributes to a community challenge
+        // Delay to show after scan result appears
+        setTimeout(() => {
+          checkChallengeContribution(detectedBug)
+        }, 1500)
+        
         // Check for badge achievements with a small delay to let DB trigger complete
         setTimeout(async () => {
           await checkBadges(user.id, badgeIdsBefore)
@@ -312,6 +320,37 @@ export function CameraScanner() {
   }
 
   // Test function to show badge notification (mock for testing)
+  const checkChallengeContribution = (bug: Bug) => {
+    const bugNameLower = bug.name.toLowerCase()
+    console.log('Checking challenge contribution for bug:', bug.name, bug.rarity)
+    
+    // Check if bug matches any challenge
+    if (bugNameLower.includes('butterfly')) {
+      console.log('Matched butterfly challenge!')
+      setChallengeContribution('butterfly-challenge')
+      setTimeout(() => {
+        console.log('Clearing butterfly challenge indicator')
+        setChallengeContribution(null)
+      }, 4000)
+    } else if (bugNameLower.includes('bee') || bugNameLower.includes('honeybee')) {
+      console.log('Matched bee challenge!')
+      setChallengeContribution('bee-challenge')
+      setTimeout(() => {
+        console.log('Clearing bee challenge indicator')
+        setChallengeContribution(null)
+      }, 4000)
+    } else if (['rare', 'epic', 'legendary'].includes(bug.rarity)) {
+      console.log('Matched rare challenge!', bug.rarity)
+      setChallengeContribution('rare-challenge')
+      setTimeout(() => {
+        console.log('Clearing rare challenge indicator')
+        setChallengeContribution(null)
+      }, 4000)
+    } else {
+      console.log('No challenge match')
+    }
+  }
+
   const testBadge = async () => {
     if (!user) return
 
@@ -366,6 +405,11 @@ export function CameraScanner() {
         badge={earnedBadge}
         onClose={() => setEarnedBadge(null)}
       />
+      <AnimatePresence>
+        {challengeContribution && (
+          <ChallengeContributionIndicator key={challengeContribution} challengeId={challengeContribution} />
+        )}
+      </AnimatePresence>
       <div className="scanner-header">
         <h2>Wild90</h2>
         <div className="scanner-header-actions">

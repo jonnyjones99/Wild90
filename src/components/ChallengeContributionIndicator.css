@@ -1,0 +1,72 @@
+.challenge-contribution-indicator {
+  position: fixed;
+  bottom: calc(250px + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10003;
+  pointer-events: none;
+  width: 100%;
+  max-width: 400px;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+.contribution-content {
+  background: var(--surface);
+  border: 2px solid var(--accent);
+  border-radius: 20px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 8px 24px rgba(202, 138, 4, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  min-width: 280px;
+  animation: glow 2s ease-in-out infinite;
+  margin: 0 auto;
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 8px 24px rgba(202, 138, 4, 0.4);
+  }
+  50% {
+    box-shadow: 0 8px 32px rgba(202, 138, 4, 0.6);
+  }
+}
+
+.contribution-icon {
+  font-size: 32px;
+  line-height: 1;
+  flex-shrink: 0;
+  animation: bounce 1s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.contribution-text {
+  flex: 1;
+}
+
+.contribution-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.contribution-message {
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 600;
+}

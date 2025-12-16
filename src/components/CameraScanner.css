@@ -214,6 +214,7 @@
   right: 0;
   bottom: 0;
   z-index: 25;
+  pointer-events: auto;
   overflow-y: auto;
   overflow-x: hidden;
   padding: calc(20px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom));
