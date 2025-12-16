@@ -1,18 +1,10 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
+import { Link, useLocation } from 'react-router-dom'
 import './Navigation.css'
 
 export function Navigation() {
-  const { signOut } = useAuth()
   const location = useLocation()
-  const navigate = useNavigate()
 
   const isActive = (path: string) => location.pathname === path
-
-  const handleSignOut = async () => {
-    await signOut()
-    navigate('/auth')
-  }
 
   return (
     <>

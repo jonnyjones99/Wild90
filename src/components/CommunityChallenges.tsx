@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
-import type { BugScan } from '../types/database'
 import './CommunityChallenges.css'
 
 interface Challenge {

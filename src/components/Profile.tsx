@@ -1,9 +1,14 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import type { UserProfile, UserBadge } from '../types/database'
 import './Profile.css'
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
+}
 
 export function Profile() {
   const { user, signOut } = useAuth()
@@ -11,10 +16,33 @@ export function Profile() {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [badges, setBadges] = useState<UserBadge[]>([])
   const [loading, setLoading] = useState(true)
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
+  const [isInstalled, setIsInstalled] = useState(false)
+  const [showIOSInstructions, setShowIOSInstructions] = useState(false)
+  const installButtonRef = useRef<HTMLButtonElement>(null)
 
   const handleSignOut = async () => {
     await signOut()
     navigate('/auth')
+  }
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) {
+      // If no prompt available, show iOS instructions
+      setShowIOSInstructions(true)
+      return
+    }
+
+    // Show the install prompt
+    deferredPrompt.prompt()
+
+    // Wait for the user to respond
+    const { outcome } = await deferredPrompt.userChoice
+
+    if (outcome === 'accepted') {
+      setIsInstalled(true)
+      setDeferredPrompt(null)
+    }
   }
 
   useEffect(() => {
@@ -23,6 +51,32 @@ export function Profile() {
       loadBadges()
     }
   }, [user])
+
+  useEffect(() => {
+    // Check if app is already installed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsInstalled(true)
+      return
+    }
+
+    // Check if running on iOS
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream
+    if (isIOS) {
+      setShowIOSInstructions(true)
+    }
+
+    // Listen for beforeinstallprompt event (Android/Chrome)
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault()
+      setDeferredPrompt(e as BeforeInstallPromptEvent)
+    }
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+    }
+  }, [])
 
   const loadProfile = async () => {
     if (!user) return
@@ -134,6 +188,57 @@ export function Profile() {
               </div>
             ))}
           </div>
+        )}
+      </div>
+
+      <div className="pwa-section">
+        <h2>Install App</h2>
+        {isInstalled ? (
+          <div className="pwa-installed">
+            <div className="pwa-icon">✓</div>
+            <p>Wild90 is installed on your device!</p>
+          </div>
+        ) : (
+          <>
+            {deferredPrompt && (
+              <button
+                ref={installButtonRef}
+                onClick={handleInstallClick}
+                className="install-button"
+              >
+                <span className="install-icon">📱</span>
+                Add to Home Screen
+              </button>
+            )}
+            {showIOSInstructions && (
+              <div className="ios-instructions">
+                <p className="ios-title">Install on iOS:</p>
+                <ol className="ios-steps">
+                  <li>Tap the <strong>Share</strong> button <span className="ios-icon">⎋</span> at the bottom</li>
+                  <li>Scroll down and tap <strong>"Add to Home Screen"</strong></li>
+                  <li>Tap <strong>"Add"</strong> to confirm</li>
+                </ol>
+                <button
+                  onClick={() => setShowIOSInstructions(false)}
+                  className="ios-dismiss"
+                >
+                  Got it
+                </button>
+              </div>
+            )}
+            {!deferredPrompt && !showIOSInstructions && (
+              <div className="pwa-info">
+                <p>Install Wild90 to your home screen for quick access!</p>
+                <button
+                  onClick={() => setShowIOSInstructions(true)}
+                  className="install-button secondary"
+                >
+                  <span className="install-icon">ℹ️</span>
+                  Show Instructions
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
 

@@ -448,54 +448,6 @@ export function CameraScanner() {
     }
   }
 
-  const testBadge = async () => {
-    if (!user) return
-
-    // Clear any existing badge first
-    setEarnedBadge(null)
-    
-    // Small delay to ensure state clears
-    await new Promise(resolve => setTimeout(resolve, 100))
-
-    try {
-      // Get a badge from the database to show (just for display)
-      const { data: badges, error: badgeError } = await supabase
-        .from('badges')
-        .select('*')
-        .limit(1)
-        .single()
-
-      if (badgeError || !badges) {
-        // If no badge in DB, use a mock badge for testing
-        const mockBadge: Badge = {
-          id: 'test-badge-' + Date.now(),
-          name: 'First Scan',
-          description: 'Scan your first bug!',
-          requirement_type: 'scan_count',
-          requirement_value: '1',
-          created_at: new Date().toISOString(),
-        }
-        setEarnedBadge(mockBadge)
-        return
-      }
-
-      // Show the notification with a real badge (just for testing the UI)
-      setEarnedBadge(badges as Badge)
-    } catch (err) {
-      console.error('Error testing badge:', err)
-      // Fallback to mock badge
-      const mockBadge: Badge = {
-        id: 'test-badge-' + Date.now(),
-        name: 'Test Badge',
-        description: 'This is a test badge notification!',
-        requirement_type: 'scan_count',
-        requirement_value: '1',
-        created_at: new Date().toISOString(),
-      }
-      setEarnedBadge(mockBadge)
-    }
-  }
-
   return (
     <div className="camera-scanner">
       <BadgeNotification

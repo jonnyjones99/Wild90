@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
-import type { Bug, BugScan } from '../types/database'
+import type { Bug } from '../types/database'
 import './Pokedex.css'
 
 export function Pokedex() {

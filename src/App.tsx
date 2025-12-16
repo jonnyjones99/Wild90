@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { Auth } from './components/Auth'
 import { PasswordReset } from './components/PasswordReset'
@@ -26,9 +26,6 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AppLayout() {
-  const location = useLocation()
-  const isScanPage = location.pathname === '/scan'
-  
   return (
     <div className="app-layout">
       <ProfileButton />
