@@ -25,6 +25,13 @@ export function Navigation() {
           <span className="nav-label">Scan</span>
         </Link>
         <Link
+          to="/pokedex"
+          className={`nav-item ${isActive('/pokedex') ? 'active' : ''}`}
+        >
+          <div className="nav-icon">📖</div>
+          <span className="nav-label">BugDex</span>
+        </Link>
+        <Link
           to="/leaderboard"
           className={`nav-item ${isActive('/leaderboard') ? 'active' : ''}`}
         >
